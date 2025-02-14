@@ -6,7 +6,7 @@ import org.example.storage.DataStorage
 fun main() {
     println("Запуск программы...")
 
-    DataStorage.data.owners.add(Owner(1, "Иван", "+800-800-355-35-35", "ivan@gmail.com"))
+    DataStorage.data.owners.add(Owner(1, "Иван", "8-800-355-35-35", "ivan@gmail.com"))
     DataStorage.saveData()
     println("Тестовые данные сохранены")
 
