@@ -1,6 +1,15 @@
 package org.example
 
+import org.example.models.Owner
+import org.example.storage.DataStorage
+
 fun main() {
+    println("Запуск программы...")
+
+    DataStorage.data.owners.add(Owner(1, "Иван", "Иванов", "ivan@mail"))
+    DataStorage.saveData()
+    println("Тестовые данные сохранены")
+
     while (true) {
         println("\nВыберите действие:")
         println("1. Добавить новое ТС")

@@ -1,15 +1,16 @@
 package org.example.models
 
+import kotlinx.serialization.Serializable
 import java.time.LocalDate
 
+@Serializable
 data class Listing(
-    val id: String,
-    val ownerId: String,
-    val vehicleVin: String,
-    var price: Double,
-    val history: MutableList<PriceChange> = mutableListOf(),
-    var status: ListingStatus = ListingStatus.ACTIVE,
-    val createdAt: LocalDate = LocalDate.now()
+    val id: Int,
+    val ownerId: Int,
+    val vin: String,
+    val price: Double,
+    val date: String,
+    val history: List<Double> = listOf()
 )
 
 data class PriceChange(
@@ -18,6 +19,4 @@ data class PriceChange(
     val newPrice: Double
 )
 
-enum class ListingStatus {
-    ACTIVE, SOLD, REMOVED
-}
+enum class ListingStatus { ACTIVE, SOLD, REMOVED }

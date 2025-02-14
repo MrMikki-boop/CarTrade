@@ -1,12 +1,16 @@
 package org.example.models
 
+import kotlinx.serialization.Serializable
+
+
+@Serializable
 sealed class Vehicle (
     open val vin: String,
     open val brand: String,
     open val model: String,
     open val year: Int,
     open val color: String,
-    open val milleage: Int
+    open val mileage: Int
 )
 
 data class Car (
@@ -15,9 +19,9 @@ data class Car (
     override val model: String,
     override val year: Int,
     override val color: String,
-    override val milleage: Int,
+    override val mileage: Int,
     val type: CarType
-): Vehicle(vin, brand, model, year, color, milleage)
+) : Vehicle(vin, brand, model, year, color, mileage)
 
 data class Motorcycle (
     override val vin: String,
@@ -25,9 +29,9 @@ data class Motorcycle (
     override val model: String,
     override val year: Int,
     override val color: String,
-    override val milleage: Int,
-    val type: MotoType
-): Vehicle(vin, brand, model, year, color, milleage)
+    override val mileage: Int,
+    val motoType: MotoType
+) : Vehicle(vin, brand, model, year, color, mileage)
 
 data class CommercialTransport (
     override val vin: String,
@@ -35,9 +39,9 @@ data class CommercialTransport (
     override val model: String,
     override val year: Int,
     override val color: String,
-    override val milleage: Int,
-    val capability: Double
-): Vehicle(vin, brand, model, year, color, milleage)
+    override val mileage: Int,
+    val loadCapacity: Double
+) : Vehicle(vin, brand, model, year, color, mileage)
 
 enum class CarType { SEDAN, COUPE, HATCHBACK }
 enum class MotoType { CROSS, SPORT, TOURING }
