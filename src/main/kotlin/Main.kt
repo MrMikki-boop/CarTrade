@@ -1,5 +1,6 @@
 package org.example
 
+import org.example.services.OwnerService
 import org.example.services.VehicleService
 
 fun main() {
@@ -14,7 +15,7 @@ fun main() {
 
         when (readlnOrNull()?.trim()) {
             "1" -> VehicleService.addVehicle()
-            "2" -> println("Добавить в базу нового владельца (в разработке)...")
+            "2" -> OwnerService.addOwner()
             "3" -> println("Добавить объявление (в разработке)...")
             "4" -> println("Снять объявление (в разработке)...")
             "5" -> println("Поиск по объявлениям (в разработке)...")
