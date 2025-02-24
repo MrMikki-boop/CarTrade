@@ -60,4 +60,38 @@ object AdService {
         saveAds()
         println("✅ Объявление успешно добавлено!")
     }
+
+    fun removeAd() {
+        if (ads.isEmpty()) {
+            println("Нет активных объявлений для удаления.")
+            return
+        }
+
+        println("Выберите объявление для удаления:")
+        ads.forEachIndexed { index, ad ->
+            println("${index + 1}. VIN: ${ad.vehicleId}, цена: ${ad.price}, дата: ${ad.date}")
+        }
+
+        val choice = readlnOrNull()?.toIntOrNull()
+        if (choice == null || choice !in 1..ads.size) {
+            println("Ошибка: Некорректный выбор.")
+            return
+        }
+
+        println("Выберите причину снятия объявления:")
+        println("1. Продано")
+        println("2. Другая причина")
+        val reason = when (readlnOrNull()?.toIntOrNull()) {
+            1 -> "Продано"
+            2 -> "Другая причина"
+            else -> {
+                println("Ошибка: Некорректный выбор.")
+                return
+            }
+        }
+
+        val removedAd = ads.removeAt(choice - 1)
+        saveAds()
+        println("✅ Объявление успешно снято с продажи (Прчина: $reason)!")
+    }
 }

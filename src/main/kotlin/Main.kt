@@ -18,7 +18,7 @@ fun main() {
             "1" -> VehicleService.addVehicle()
             "2" -> OwnerService.addOwner()
             "3" -> AdService.addAd()
-            "4" -> println("Снять объявление (в разработке)...")
+            "4" -> AdService.removeAd()
             "5" -> println("Поиск по объявлениям (в разработке)...")
             "6" -> {
                 println("Выход из программы...")
