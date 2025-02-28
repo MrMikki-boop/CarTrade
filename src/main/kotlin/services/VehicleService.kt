@@ -46,11 +46,13 @@ object VehicleService {
                 val bodyType = readlnOrNull()?.trim().orEmpty()
                 Car(vin, brand, model, year, color, mileage, bodyType)
             }
+
             2 -> {
                 println("Введите тип мотоцикла (кроссовый, спортивный, грантуризмо):")
                 val motoType = readlnOrNull()?.trim().orEmpty()
                 Motorcycle(vin, brand, model, year, color, mileage, motoType)
             }
+
             3 -> {
                 println("Введите грузоподъемность (в кг):")
                 val capacity = readlnOrNull()?.toIntOrNull() ?: run {
@@ -59,6 +61,7 @@ object VehicleService {
                 }
                 Commercial(vin, brand, model, year, color, mileage, capacity)
             }
+
             else -> {
                 println("Ошибка: Неверный тип ТС!")
                 return
@@ -76,6 +79,10 @@ object VehicleService {
         val file = File(VEHICLES_FILE)
         if (!file.exists()) return emptyList()
         return Json.decodeFromString(file.readText())
+    }
+
+    fun getVehicleById(vin: String): Vehicle? {
+        return loadVehicles().find { it.vin == vin }
     }
 
     private fun saveVehicles(vehicles: List<Vehicle>) {
