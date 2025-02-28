@@ -3,7 +3,7 @@ package org.example.services
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.example.models.Ad
+import org.example.models.*
 import java.io.File
 import java.time.LocalDate
 
@@ -94,4 +94,116 @@ object AdService {
         saveAds()
         println("✅ Объявление успешно снято с продажи (Прчина: $reason)!")
     }
+
+    // поиск объявлений по разным параметрам
+    private fun searchByPriceAndMileage() {
+        println("Введите минимальную цену (или нажмите Enter, чтобы пропустить):")
+        val minPrice = readlnOrNull()?.toDoubleOrNull()
+
+        println("Введите максимальную цену (или нажмите Enter, чтобы пропустить):")
+        val maxPrice = readlnOrNull()?.toDoubleOrNull()
+
+        println("Введите минимальный пробег (или нажмите Enter, чтобы пропустить):")
+        val minMileage = readlnOrNull()?.toIntOrNull()
+
+        println("Введите максимальный пробег (или нажмите Enter, чтобы пропустить):")
+        val maxMileage = readlnOrNull()?.toIntOrNull()
+
+        val filteredAds = ads.filter { ad ->
+            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+            vehicle != null &&
+                    (minPrice == null || ad.price >= minPrice) &&
+                    (maxPrice == null || ad.price <= maxPrice) &&
+                    (minMileage == null || vehicle.mileage >= minMileage) &&
+                    (maxMileage == null || vehicle.mileage <= maxMileage)
+        }
+
+        printSearchResults(filteredAds)
+    }
+
+    private fun searchByColor() {
+        println("Введите цвет ТС:")
+        val color = readlnOrNull()?.trim()?.lowercase() ?: return
+
+        val filteredAds = ads.filter { ad ->
+            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+            vehicle != null && vehicle.color.lowercase() == color
+        }
+
+        printSearchResults(filteredAds)
+    }
+
+    private fun searchByType() {
+        println("Выберите тип ТС:")
+        println("1. Авто")
+        println("2. Мото")
+        println("3. Коммерческий")
+        val typeChoice = readlnOrNull()?.toIntOrNull()
+
+        val filteredAds = ads.filter { ad ->
+            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+            when (typeChoice) {
+                1 -> vehicle is Car
+                2 -> vehicle is Motorcycle
+                3 -> vehicle is Commercial
+                else -> false
+            }
+        }
+
+        printSearchResults(filteredAds)
+    }
+
+    private fun showAllAds() {
+        printSearchResults(ads)
+    }
+
+    private fun searchByVIN() {
+        println("Введите VIN ТС:")
+        val vin = readlnOrNull()?.trim()?.uppercase() ?: return
+
+        val filteredAds = ads.filter { it.vehicleId.uppercase() == vin }
+        printSearchResults(filteredAds)
+    }
+
+    private fun printSearchResults(results: List<Ad>) {
+        if (results.isEmpty()) {
+            println("🔍 По вашему запросу ничего не найдено.")
+        } else {
+            println("🔍 Найдено ${results.size} объявлений:")
+            results.forEach { ad ->
+                val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+                if (vehicle != null) {
+                    println("📌 ${vehicle.brand} ${vehicle.model}, ${vehicle.year}г., Цвет: ${vehicle.color}, Пробег: ${vehicle.mileage} км, Цена: ${ad.price} руб.")
+                }
+            }
+        }
+    }
+
+    fun showAds() {
+        if (ads.isEmpty()) {
+            println("🔍 Нет активных объявлений для поиска.")
+            return
+        }
+
+        while (true) {
+            println("\nВыберите действие:")
+            println("1. Поиск по цене и пробегу")
+            println("2. Поиск по цвету")
+            println("3. Поиск по типу ТС")
+            println("4. Общий поиск (все объявления)")
+            println("5. Поиск по VIN")
+            println("6. Вернуться назад")
+
+            when (readlnOrNull()?.trim()) {
+                "1" -> searchByPriceAndMileage()
+                "2" -> searchByColor()
+                "3" -> searchByType()
+                "4" -> showAllAds()
+                "5" -> searchByVIN()
+                "6" -> return
+                else -> println("Ошибка: Некорректный выбор!")
+            }
+        }
+    }
+
 }

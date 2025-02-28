@@ -19,7 +19,7 @@ fun main() {
             "2" -> OwnerService.addOwner()
             "3" -> AdService.addAd()
             "4" -> AdService.removeAd()
-            "5" -> println("Поиск по объявлениям (в разработке)...")
+            "5" -> AdService.showAds()
             "6" -> {
                 println("Выход из программы...")
                 return
