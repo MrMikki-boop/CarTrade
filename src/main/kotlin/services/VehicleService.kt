@@ -91,6 +91,10 @@ object VehicleService {
         return loadVehicles().find { it.vin == vin }
     }
 
+    fun getAllVehicles(): List<Vehicle> {
+        return loadVehicles()
+    }
+
     private fun saveVehicles(vehicles: List<Vehicle>) {
         File(VEHICLES_FILE).writeText(Json.encodeToString(vehicles))
     }

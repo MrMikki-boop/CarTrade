@@ -30,18 +30,34 @@ object AdService {
     }
 
     fun addAd() {
+        val availableVehicles = VehicleService.getAllVehicles()
+            .filter { vehicle -> ads.none { it.vehicleId == vehicle.vin } }
+
+        if (availableVehicles.isEmpty()) {
+            println("Нет доступных ТС для создания объявления.")
+            return
+        }
+
+        println("Выберите ТС для объявления:")
+        availableVehicles.forEachIndexed { index, vehicle ->
+            println("${index + 1}. ${vehicle.brand} ${vehicle.model} (${vehicle.year}) - VIN: ${vehicle.vin}")
+        }
+
+        val choice = readlnOrNull()?.toIntOrNull()
+        if (choice == null || choice !in 1..availableVehicles.size) {
+            println("Ошибка: Некорректный выбор.")
+            return
+        }
+
+        val selectedVehicle = availableVehicles[choice - 1]
+
         println("Введите ID владельца:")
         val ownerId = readlnOrNull()?.trim().orEmpty()
         if (ownerId.isEmpty()) {
             println("Ошибка: ID владельца не может быть пустым!")
             return
         }
-        println("Введите VIN ТС:")
-        val vehicleId = readlnOrNull()?.trim().orEmpty()
-        if (vehicleId.isEmpty()) {
-            println("Ошибка: VIN ТС не может быть пустым!")
-            return
-        }
+
         println("Введите цену:")
         val price = readlnOrNull()?.toDoubleOrNull()
         if (price == null || price <= 0) {
@@ -51,7 +67,7 @@ object AdService {
 
         val newAd = Ad(
             ownerId = ownerId,
-            vehicleId = vehicleId,
+            vehicleId = selectedVehicle.vin,
             price = price,
             date = LocalDate.now().toString()
         )
@@ -63,21 +79,25 @@ object AdService {
 
     // Удаление объявления
     fun removeAd() {
-        if (ads.isEmpty()) {
-            println("Нет активных объявлений для удаления.")
+        val activeAds = ads.filter { it.status == "active" }
+        if (activeAds.isEmpty()) {
+            println("Нет активных объявлений для снятия.")
             return
         }
 
         println("Выберите объявление для удаления:")
-        ads.forEachIndexed { index, ad ->
-            println("${index + 1}. VIN: ${ad.vehicleId}, цена: ${ad.price}, дата: ${ad.date}")
+        activeAds.forEachIndexed { index, ad ->
+            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+            println("${index + 1}. ${vehicle?.brand} ${vehicle?.model} - VIN: ${ad.vehicleId}, Цена: ${ad.price}")
         }
 
         val choice = readlnOrNull()?.toIntOrNull()
-        if (choice == null || choice !in 1..ads.size) {
+        if (choice == null || choice !in 1..activeAds.size) {
             println("Ошибка: Некорректный выбор.")
             return
         }
+
+        val selectedAd = activeAds[choice - 1]
 
         println("Выберите причину снятия объявления:")
         println("1. Продано")
@@ -91,7 +111,8 @@ object AdService {
             }
         }
 
-        val removedAd = ads.removeAt(choice - 1)
+        selectedAd.status = "removed"
+        selectedAd.removalReason = reason
         saveAds()
 
         println("✅ Объявление снято с продажи (Причина: $reason)")
@@ -182,7 +203,9 @@ object AdService {
     }
 
     fun showAds() {
-        if (ads.isEmpty()) {
+        val activeAds = ads.filter { it.status == "active" }
+
+        if (activeAds.isEmpty()) {
             println("🔍 Нет активных объявлений для поиска.")
             return
         }

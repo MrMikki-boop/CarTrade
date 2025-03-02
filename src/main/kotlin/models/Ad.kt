@@ -11,5 +11,6 @@ data class Ad(
     var price: Double,
     val date: String,
     var status: String = "active", // active, sold, removed
-    val priceHistory: MutableList<Double> = mutableListOf()
+    val priceHistory: MutableList<Double> = mutableListOf(),
+    var removalReason: String? = null
 )
