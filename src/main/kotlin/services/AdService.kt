@@ -61,6 +61,7 @@ object AdService {
         println("✅ Объявление успешно добавлено!")
     }
 
+    // Удаление объявления
     fun removeAd() {
         if (ads.isEmpty()) {
             println("Нет активных объявлений для удаления.")
@@ -92,7 +93,8 @@ object AdService {
 
         val removedAd = ads.removeAt(choice - 1)
         saveAds()
-        println("✅ Объявление успешно снято с продажи (Прчина: $reason)!")
+
+        println("✅ Объявление снято с продажи (Причина: $reason)")
     }
 
     // поиск объявлений по разным параметрам
