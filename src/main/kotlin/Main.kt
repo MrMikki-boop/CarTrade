@@ -12,7 +12,8 @@ fun main() {
         println("3. Добавить объявление")
         println("4. Снять объявление")
         println("5. Поиск по объявлениям")
-        println("6. Выйти")
+        println("6. Изменить цену объявления")
+        println("7. Выйти")
 
         when (readlnOrNull()?.trim()) {
             "1" -> VehicleService.addVehicle()
@@ -20,7 +21,8 @@ fun main() {
             "3" -> AdService.addAd()
             "4" -> AdService.removeAd()
             "5" -> AdService.showAds()
-            "6" -> {
+            "6" -> AdService.changeAdPrice()
+            "7" -> {
                 println("Выход из программы...")
                 return
             }

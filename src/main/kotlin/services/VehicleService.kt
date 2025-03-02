@@ -20,7 +20,7 @@ object VehicleService {
         val vehicles = loadVehicles()
         if (vehicles.any { it.vin == vin }) {
             println("Ошибка: ТС с таким VIN уже существует!")
-            return
+            return addVehicle()
         }
 
         println("Введите марку:")
@@ -32,7 +32,7 @@ object VehicleService {
         println("Введите год выпуска:")
         val year = readlnOrNull()?.toIntOrNull() ?: run {
             println("Ошибка: Год выпуска должен быть числом!")
-            return
+            return addVehicle()
         }
 
         println("Введите цвет:")
@@ -41,7 +41,7 @@ object VehicleService {
         println("Введите пробег:")
         val mileage = readlnOrNull()?.toIntOrNull() ?: run {
             println("Ошибка: Пробег должен быть числом!")
-            return
+            return addVehicle()
         }
 
         println("Выберите тип ТС:\n1. Авто\n2. Мото\n3. Коммерческий транспорт")
@@ -64,14 +64,14 @@ object VehicleService {
                 println("Введите грузоподъемность (в кг):")
                 val capacity = readlnOrNull()?.toIntOrNull() ?: run {
                     println("Ошибка: Грузоподъемность должна быть числом!")
-                    return
+                    return addVehicle()
                 }
                 Commercial(vin, brand, model, year, color, mileage, capacity)
             }
 
             else -> {
                 println("Ошибка: Неверный тип ТС!")
-                return
+                return addVehicle()
             }
         }
 

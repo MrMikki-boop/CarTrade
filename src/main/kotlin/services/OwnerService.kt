@@ -40,7 +40,7 @@ object OwnerService {
         println("✅ Владелец успешно добавлен!")
     }
 
-    private fun loadOwners(): List<Owner> {
+    fun loadOwners(): List<Owner> {
         val file = File(OWNERS_FILE)
         if (!file.exists()) return emptyList()
         return Json.decodeFromString(file.readText())
