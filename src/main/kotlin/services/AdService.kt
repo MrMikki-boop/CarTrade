@@ -104,7 +104,7 @@ object AdService {
             }
         }
 
-        selectedAd.status = "removed"
+        selectedAd.status = if (reason == "Продано") "sold" else "removed"
         selectedAd.removalReason = reason
         DataStorage.saveData()
         println("✅ Объявление снято с продажи (Причина: $reason)")
@@ -125,7 +125,7 @@ object AdService {
         val maxMileage = readlnOrNull()?.toIntOrNull()
 
         val filteredAds = ads.filter { ad ->
-            ad.status == "active" && // Только актуальные объявления
+            ad.status == "active" &&
                     VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
                         (minPrice == null || ad.price >= minPrice) &&
                                 (maxPrice == null || ad.price <= maxPrice) &&
@@ -166,6 +166,7 @@ object AdService {
                 }
                 printSearchResults(filteredAds)
             }
+
             2 -> {
                 println("Введите тип мотоцикла (кроссовый, спортивный, грантуризмо, или нажмите Enter для всех):")
                 val motoType = readlnOrNull()?.trim()?.lowercase()
@@ -177,6 +178,7 @@ object AdService {
                 }
                 printSearchResults(filteredAds)
             }
+
             3 -> {
                 println("Введите минимальную грузоподъёмность (в кг, или нажмите Enter для всех):")
                 val minCapacity = readlnOrNull()?.toIntOrNull()
@@ -188,6 +190,7 @@ object AdService {
                 }
                 printSearchResults(filteredAds)
             }
+
             else -> {
                 println("Ошибка: Некорректный выбор.")
             }
@@ -265,6 +268,8 @@ object AdService {
 
     // Изменение цены
     fun changeAdPrice() {
+        println("Выберите объявление для изменения цены:")
+
         val activeAds = ads.filter { it.status == "active" }
         if (activeAds.isEmpty()) {
             println("Нет активных объявлений.")
@@ -321,7 +326,7 @@ object AdService {
             if (vehicle != null) {
                 println("${index + 1}. ${vehicle.brand} ${vehicle.model} - Текущая цена: ${ad.price} - VIN: ${ad.vehicleId}")
             } else {
-                println("Предупреждение: ТС с VIN ${ad.vehicleId} не найдено!")
+                println("Ошибка: ТС с VIN ${ad.vehicleId} не найдено!")
             }
         }
 

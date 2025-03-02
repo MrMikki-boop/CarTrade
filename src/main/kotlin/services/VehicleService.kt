@@ -18,7 +18,7 @@ object VehicleService {
         val vehicles = DataStorage.data.vehicles
         if (vehicles.any { it.vin == vin }) {
             println("Ошибка: ТС с таким VIN уже существует!")
-            return
+            return addVehicle()
         }
 
         println("Введите марку:")
@@ -30,7 +30,7 @@ object VehicleService {
         println("Введите год выпуска:")
         val year = readlnOrNull()?.toIntOrNull() ?: run {
             println("Ошибка: Год выпуска должен быть числом!")
-            return
+            return addVehicle()
         }
 
         println("Введите цвет:")
@@ -39,7 +39,7 @@ object VehicleService {
         println("Введите пробег:")
         val mileage = readlnOrNull()?.toIntOrNull() ?: run {
             println("Ошибка: Пробег должен быть числом!")
-            return
+            return addVehicle()
         }
 
         println("Выберите тип ТС:\n1. Авто\n2. Мото\n3. Коммерческий транспорт")
@@ -51,22 +51,25 @@ object VehicleService {
                 val bodyType = readlnOrNull()?.trim().orEmpty()
                 Car(vin, brand, model, year, color, mileage, bodyType)
             }
+
             2 -> {
                 println("Введите тип мотоцикла (кроссовый, спортивный, грантуризмо):")
                 val motoType = readlnOrNull()?.trim().orEmpty()
                 Motorcycle(vin, brand, model, year, color, mileage, motoType)
             }
+
             3 -> {
                 println("Введите грузоподъемность (в кг):")
                 val capacity = readlnOrNull()?.toIntOrNull() ?: run {
                     println("Ошибка: Грузоподъемность должна быть числом!")
-                    return
+                    return addVehicle()
                 }
                 Commercial(vin, brand, model, year, color, mileage, capacity)
             }
+
             else -> {
                 println("Ошибка: Неверный тип ТС!")
-                return
+                return addVehicle()
             }
         }
 
