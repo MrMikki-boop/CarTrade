@@ -23,13 +23,7 @@ object AdService {
         availableVehicles.forEachIndexed { index, vehicle ->
             println("${index + 1}. ${vehicle.brand} ${vehicle.model} (${vehicle.year}) - VIN: ${vehicle.vin}")
         }
-
-        val vehicleChoice = readlnOrNull()?.toIntOrNull()
-        if (vehicleChoice == null || vehicleChoice !in 1..availableVehicles.size) {
-            println("Ошибка: Некорректный выбор ТС.")
-            return addAd()
-        }
-
+        val vehicleChoice = readVehicleChoice(availableVehicles.size)
         val selectedVehicle = availableVehicles[vehicleChoice - 1]
 
         val owners = OwnerService.loadOwners()
@@ -42,21 +36,10 @@ object AdService {
         owners.forEachIndexed { index, owner ->
             println("${index + 1}. Имя: ${owner.name}, телефон ${owner.phone}, email ${owner.email}")
         }
-
-        val ownerChoice = readlnOrNull()?.toIntOrNull()
-        if (ownerChoice == null || ownerChoice !in 1..owners.size) {
-            println("Ошибка: Некорректный выбор владельца.")
-            return addAd()
-        }
-
+        val ownerChoice = readOwnerChoice(owners.size)
         val selectedOwner = owners[ownerChoice - 1]
 
-        println("Введите цену:")
-        val price = readlnOrNull()?.toDoubleOrNull()
-        if (price == null || price <= 0) {
-            println("Ошибка: Цена должна быть положительным числом!")
-            return addAd()
-        }
+        val price = readPrice()
 
         val newAd = Ad(
             ownerId = selectedOwner.id,
@@ -70,6 +53,33 @@ object AdService {
         println("✅ Объявление успешно добавлено!")
     }
 
+    private fun readVehicleChoice(max: Int): Int {
+        while (true) {
+            println("Введите номер ТС (от 1 до $max):")
+            val input = readlnOrNull()?.toIntOrNull()
+            if (input != null && input in 1..max) return input
+            println("Ошибка: Некорректный выбор ТС!")
+        }
+    }
+
+    private fun readOwnerChoice(max: Int): Int {
+        while (true) {
+            println("Введите номер владельца (от 1 до $max):")
+            val input = readlnOrNull()?.toIntOrNull()
+            if (input != null && input in 1..max) return input
+            println("Ошибка: Некорректный выбор владельца!")
+        }
+    }
+
+    private fun readPrice(): Double {
+        while (true) {
+            println("Введите цену:")
+            val input = readlnOrNull()?.toDoubleOrNull()
+            if (input != null && input > 0) return input
+            println("Ошибка: Цена должна быть положительным числом!")
+        }
+    }
+
     // Удаление объявления
     fun removeAd() {
         val activeAds = ads.filter { it.status == "active" }
@@ -81,33 +91,41 @@ object AdService {
         println("Выберите объявление для удаления:")
         activeAds.forEachIndexed { index, ad ->
             val vehicle = VehicleService.getVehicleById(ad.vehicleId)
-            println("${index + 1}. ${vehicle?.brand} ${vehicle?.model} - VIN: ${ad.vehicleId}, Цена: ${ad.price}")
+            val owner = OwnerService.loadOwners().find { it.id == ad.ownerId }
+            println("${index + 1}. ${vehicle?.brand} ${vehicle?.model} - Владелец: ${owner?.name} (${owner?.phone}), VIN: ${ad.vehicleId}, Цена: ${ad.price}")
         }
 
-        val choice = readlnOrNull()?.toIntOrNull()
-        if (choice == null || choice !in 1..activeAds.size) {
-            println("Ошибка: Некорректный выбор.")
-            return
-        }
-
+        val choice = readAdChoice(activeAds.size)
         val selectedAd = activeAds[choice - 1]
 
-        println("Выберите причину снятия объявления:")
-        println("1. Продано")
-        println("2. Другая причина")
-        val reason = when (readlnOrNull()?.toIntOrNull()) {
-            1 -> "Продано"
-            2 -> "Другая причина"
-            else -> {
-                println("Ошибка: Некорректный выбор.")
-                return
-            }
-        }
+        val reason = readRemovalReason()
 
         selectedAd.status = if (reason == "Продано") "sold" else "removed"
         selectedAd.removalReason = reason
         DataStorage.saveData()
         println("✅ Объявление снято с продажи (Причина: $reason)")
+    }
+
+    private fun readAdChoice(max: Int): Int {
+        while (true) {
+            println("Введите номер объявления (от 1 до $max):")
+            val input = readlnOrNull()?.toIntOrNull()
+            if (input != null && input in 1..max) return input
+            println("Ошибка: Некорректный выбор объявления!")
+        }
+    }
+
+    private fun readRemovalReason(): String {
+        while (true) {
+            println("Выберите причину снятия объявления:")
+            println("1. Продано")
+            println("2. Другая причина")
+            when (readlnOrNull()?.toIntOrNull()) {
+                1 -> return "Продано"
+                2 -> return "Другая причина"
+                else -> println("Ошибка: Некорректный выбор!")
+            }
+        }
     }
 
     // поиск объявлений по разным параметрам
@@ -268,14 +286,13 @@ object AdService {
 
     // Изменение цены
     fun changeAdPrice() {
-        println("Выберите объявление для изменения цены:")
-
         val activeAds = ads.filter { it.status == "active" }
         if (activeAds.isEmpty()) {
             println("Нет активных объявлений.")
             return
         }
 
+        println("Выберите объявление для изменения цены:")
         activeAds.forEachIndexed { index, ad ->
             val vehicle = VehicleService.getVehicleById(ad.vehicleId)
             if (vehicle == null) {
@@ -285,23 +302,13 @@ object AdService {
             println("${index + 1}. ${vehicle.brand} ${vehicle.model} - Текущая цена: ${ad.price} - VIN: ${ad.vehicleId}")
         }
 
-        val choice = readlnOrNull()?.toIntOrNull()
-        if (choice == null || choice !in 1..activeAds.size) {
-            println("Ошибка: Некорректный выбор. Попробуйте ещё раз.")
-            return changeAdPrice()
-        }
-
+        val choice = readAdChoice(activeAds.size)
         val ad = activeAds[choice - 1]
 
-        println("Введите новую цену:")
-        val newPrice = readlnOrNull()?.toDoubleOrNull()
-        if (newPrice == null || newPrice <= 0) {
-            println("Ошибка: Цена должна быть положительным числом! Попробуйте ещё раз.")
-            return changeAdPrice()
-        }
+        val newPrice = readPrice()
 
         println("Текущая цена: ${ad.price}. Вы уверены, что хотите изменить на $newPrice? (да/нет)")
-        val confirm = readlnOrNull()?.trim()?.lowercase()
+        val confirm = readConfirmation()
         if (confirm != "да") {
             println("Изменение отменено.")
             return
@@ -330,12 +337,7 @@ object AdService {
             }
         }
 
-        val choice = readlnOrNull()?.toIntOrNull()
-        if (choice == null || choice !in 1..activeAds.size) {
-            println("Ошибка: Некорректный выбор. Попробуйте ещё раз.")
-            return showPriceHistory()
-        }
-
+        val choice = readAdChoice(activeAds.size)
         val ad = activeAds[choice - 1]
 
         println("📊 История изменения цен для VIN: ${ad.vehicleId}")
@@ -345,6 +347,15 @@ object AdService {
             ad.priceHistory.forEachIndexed { index, price ->
                 println("${index + 1}. $price руб.")
             }
+        }
+    }
+
+    private fun readConfirmation(): String {
+        while (true) {
+            println("Введите 'да' или 'нет':")
+            val input = readlnOrNull()?.trim()?.lowercase()
+            if (input == "да" || input == "нет") return input
+            println("Ошибка: Введите только 'да' или 'нет'!")
         }
     }
 }
