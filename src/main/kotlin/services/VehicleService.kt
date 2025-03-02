@@ -11,10 +11,17 @@ object VehicleService {
     fun addVehicle() {
         println("Введите VIN (17 символов):")
         val vin = readlnOrNull()?.trim().orEmpty()
+
 //        if (vin.length != 17) {
 //            println("Ошибка: VIN должен содержать 17 символов!")
 //            return
 //        }
+
+        val vehicles = loadVehicles()
+        if (vehicles.any { it.vin == vin }) {
+            println("Ошибка: ТС с таким VIN уже существует!")
+            return
+        }
 
         println("Введите марку:")
         val brand = readlnOrNull()?.trim().orEmpty()
@@ -68,10 +75,9 @@ object VehicleService {
             }
         }
 
-        val vehicles = loadVehicles().toMutableList()
-        vehicles.add(vehicle)
+        val updatedVehicles = vehicles.toMutableList().apply { add(vehicle) }
+        saveVehicles(updatedVehicles)
 
-        saveVehicles(vehicles)
         println("✅ Транспортное средство добавлено успешно!")
     }
 
