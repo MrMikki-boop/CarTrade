@@ -13,14 +13,14 @@ object OwnerService {
         val name = readlnOrNull()?.trim().orEmpty()
         if (name.isEmpty()) {
             println("Ошибка: Имя владельца не может быть пустым!")
-            return
+            return addOwner()
         }
 
         println("Введите телефон владельца:")
         val phone = readlnOrNull()?.trim().orEmpty()
         if (!phone.matches(Regex("^\\+7\\d{10}\$"))) {
             println("Ошибка: Некорректный номер телефона!")
-            return
+            return addOwner()
         }
 
 
@@ -28,7 +28,7 @@ object OwnerService {
         val email = readlnOrNull()?.trim().orEmpty()
         if (!email.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$"))) {
             println("Ошибка: Некорректный email!")
-            return
+            return addOwner()
         }
 
         val owner = Owner(UUID.randomUUID().toString(), name, phone, email)

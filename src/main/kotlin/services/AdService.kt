@@ -56,18 +56,18 @@ object AdService {
         val owners = OwnerService.loadOwners()
         if (owners.none { it.id == ownerId }) {
             println("Ошибка: Владелец с ID $ownerId не найден!")
-            return
+            return addAd()
         }
         if (ownerId.isEmpty()) {
             println("Ошибка: ID владельца не может быть пустым!")
-            return
+            return addAd()
         }
 
         println("Введите цену:")
         val price = readlnOrNull()?.toDoubleOrNull()
         if (price == null || price <= 0) {
             println("Ошибка: Цена должна быть числом!")
-            return
+            return addAd()
         }
 
         val newAd = Ad(
@@ -166,6 +166,7 @@ object AdService {
         println("1. Авто")
         println("2. Мото")
         println("3. Коммерческий")
+        println("4. Общий список")
         val typeChoice = readlnOrNull()?.toIntOrNull()
 
         val filteredAds = ads.filter { ad ->
@@ -174,6 +175,7 @@ object AdService {
                 1 -> vehicle is Car
                 2 -> vehicle is Motorcycle
                 3 -> vehicle is Commercial
+                4 -> true
                 else -> false
             }
         }
@@ -209,7 +211,6 @@ object AdService {
 
     fun showAds() {
         val activeAds = ads.filter { it.status == "active" }
-
         if (activeAds.isEmpty()) {
             println("🔍 Нет активных объявлений для поиска.")
             return
@@ -241,7 +242,6 @@ object AdService {
         println("Выберите объявление для изменения цены:")
 
         val activeAds = ads.filter { it.status == "active" }
-
         if (activeAds.isEmpty()) {
             println("Нет активных объявлений.")
             return
@@ -282,5 +282,40 @@ object AdService {
         ad.price = newPrice
         saveAds()
         println("✅ Цена объявления обновлена!")
+    }
+
+    // История цены
+    fun showPriceHistory() {
+        val activeAds = ads.filter { it.status == "active" }
+        if (activeAds.isEmpty()) {
+            println("Нет активных объявлений для просмотра истории цен.")
+            return
+        }
+
+        activeAds.forEachIndexed { index, ad ->
+            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+            if (vehicle != null) {
+                println("${index + 1}. ${vehicle.brand} ${vehicle.model} - Текущая цена: ${ad.price} - VIN: ${ad.vehicleId}")
+            } else {
+                println("Ошибка: ТС с VIN ${ad.vehicleId} не найдено!")
+            }
+        }
+
+        val choice = readlnOrNull()?.toIntOrNull()
+        if (choice == null || choice !in 1..activeAds.size) {
+            println("Ошибка: Некорректный выбор. Попробуйте ещё раз.")
+            return showPriceHistory()
+        }
+
+        val ad = activeAds[choice - 1]
+
+        println("📊 История изменения цен для VIN: ${ad.vehicleId}")
+        if (ad.priceHistory.isEmpty()) {
+            println("⏳ Изменений цены не было.")
+        } else {
+            ad.priceHistory.forEachIndexed { index, price ->
+                println("${index + 1}. $price руб.")
+            }
+        }
     }
 }
