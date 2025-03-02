@@ -13,10 +13,8 @@ data class Listing(
     val history: List<Double> = listOf()
 )
 
-data class PriceChange(
+data class PriceChange( // Возможно реализовать в следующих версиях
     val date: LocalDate,
     val oldPrice: Double,
     val newPrice: Double
 )
-
-enum class ListingStatus { ACTIVE, SOLD, REMOVED }

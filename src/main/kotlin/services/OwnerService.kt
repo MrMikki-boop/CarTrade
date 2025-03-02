@@ -1,13 +1,10 @@
 package org.example.services
 
-import kotlinx.serialization.json.Json
 import org.example.models.Owner
-import java.io.File
+import org.example.storage.DataStorage
 import java.util.UUID
 
 object OwnerService {
-    private const val OWNERS_FILE = "owners.json"
-
     fun addOwner() {
         println("Введите имя владельца:")
         val name = readlnOrNull()?.trim().orEmpty()
@@ -23,7 +20,6 @@ object OwnerService {
             return addOwner()
         }
 
-
         println("Введите email владельца:")
         val email = readlnOrNull()?.trim().orEmpty()
         if (!email.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$"))) {
@@ -32,21 +28,11 @@ object OwnerService {
         }
 
         val owner = Owner(UUID.randomUUID().toString(), name, phone, email)
-        val owners = loadOwners().toMutableList()
-        owners.add(owner)
-
-        saveOwners(owners)
+        DataStorage.data.owners.add(owner)
+        DataStorage.saveData()
 
         println("✅ Владелец успешно добавлен!")
     }
 
-    fun loadOwners(): List<Owner> {
-        val file = File(OWNERS_FILE)
-        if (!file.exists()) return emptyList()
-        return Json.decodeFromString(file.readText())
-    }
-
-    private fun saveOwners(owners: List<Owner>) {
-        File(OWNERS_FILE).writeText(Json.encodeToString(owners))
-    }
+    fun loadOwners(): List<Owner> = DataStorage.data.owners
 }

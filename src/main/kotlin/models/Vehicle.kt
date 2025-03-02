@@ -1,7 +1,6 @@
 package org.example.models
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Polymorphic
 
 @Serializable
 sealed class Vehicle {

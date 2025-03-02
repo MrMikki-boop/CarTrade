@@ -1,33 +1,14 @@
 package org.example.services
 
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import org.example.models.*
-import java.io.File
+import org.example.models.Ad
+import org.example.models.Car
+import org.example.models.Commercial
+import org.example.models.Motorcycle
+import org.example.storage.DataStorage
 import java.time.LocalDate
 
 object AdService {
-    private const val ADS_FILE = "ads.json"
-    private val ads = mutableListOf<Ad>()
-
-    init {
-        loadAds()
-    }
-
-    private fun loadAds() {
-        val file = File(ADS_FILE)
-        if (file.exists()) {
-            val content = file.readText()
-            if (content.isNotEmpty()) {
-                ads.addAll(Json.decodeFromString(content))
-            }
-        }
-    }
-
-    private fun saveAds() {
-        File(ADS_FILE).writeText(Json.encodeToString(ads))
-    }
+    private val ads: MutableList<Ad> get() = DataStorage.data.ads
 
     fun addAd() {
         val availableVehicles = VehicleService.getAllVehicles()
@@ -43,19 +24,20 @@ object AdService {
             println("${index + 1}. ${vehicle.brand} ${vehicle.model} (${vehicle.year}) - VIN: ${vehicle.vin}")
         }
 
-        val choice = readlnOrNull()?.toIntOrNull()
-        if (choice == null || choice !in 1..availableVehicles.size) {
-            println("Ошибка: Некорректный выбор.")
-            return
+        val vehicleChoice = readlnOrNull()?.toIntOrNull()
+        if (vehicleChoice == null || vehicleChoice !in 1..availableVehicles.size) {
+            println("Ошибка: Некорректный выбор ТС.")
+            return addAd()
         }
 
-        val selectedVehicle = availableVehicles[choice - 1]
+        val selectedVehicle = availableVehicles[vehicleChoice - 1]
 
         val owners = OwnerService.loadOwners()
         if (owners.isEmpty()) {
             println("Ошибка: Нет зарегистрированных владельцев. Сначала добавьте владельца.")
             return
         }
+
         println("Выберите владельца для объявления:")
         owners.forEachIndexed { index, owner ->
             println("${index + 1}. Имя: ${owner.name}, телефон ${owner.phone}, email ${owner.email}")
@@ -72,7 +54,7 @@ object AdService {
         println("Введите цену:")
         val price = readlnOrNull()?.toDoubleOrNull()
         if (price == null || price <= 0) {
-            println("Ошибка: Цена должна быть числом!")
+            println("Ошибка: Цена должна быть положительным числом!")
             return addAd()
         }
 
@@ -84,7 +66,7 @@ object AdService {
         )
         newAd.priceHistory.add(price)
         ads.add(newAd)
-        saveAds()
+        DataStorage.saveData()
         println("✅ Объявление успешно добавлено!")
     }
 
@@ -122,10 +104,9 @@ object AdService {
             }
         }
 
-        selectedAd.status = if (reason == "Продано") "sold" else "removed"
+        selectedAd.status = "removed"
         selectedAd.removalReason = reason
-        saveAds()
-
+        DataStorage.saveData()
         println("✅ Объявление снято с продажи (Причина: $reason)")
     }
 
@@ -144,14 +125,14 @@ object AdService {
         val maxMileage = readlnOrNull()?.toIntOrNull()
 
         val filteredAds = ads.filter { ad ->
-            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
-            vehicle != null &&
-                    (minPrice == null || ad.price >= minPrice) &&
-                    (maxPrice == null || ad.price <= maxPrice) &&
-                    (minMileage == null || vehicle.mileage >= minMileage) &&
-                    (maxMileage == null || vehicle.mileage <= maxMileage)
+            ad.status == "active" && // Только актуальные объявления
+                    VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
+                        (minPrice == null || ad.price >= minPrice) &&
+                                (maxPrice == null || ad.price <= maxPrice) &&
+                                (minMileage == null || vehicle.mileage >= minMileage) &&
+                                (maxMileage == null || vehicle.mileage <= maxMileage)
+                    } ?: false
         }
-
         printSearchResults(filteredAds)
     }
 
@@ -160,10 +141,9 @@ object AdService {
         val color = readlnOrNull()?.trim()?.lowercase() ?: return
 
         val filteredAds = ads.filter { ad ->
-            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
-            vehicle != null && vehicle.color.lowercase() == color
+            ad.status == "active" &&
+                    VehicleService.getVehicleById(ad.vehicleId)?.color?.lowercase() == color
         }
-
         printSearchResults(filteredAds)
     }
 
@@ -172,32 +152,64 @@ object AdService {
         println("1. Авто")
         println("2. Мото")
         println("3. Коммерческий")
-        println("4. Общий список")
         val typeChoice = readlnOrNull()?.toIntOrNull()
 
-        val filteredAds = ads.filter { ad ->
-            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
-            when (typeChoice) {
-                1 -> vehicle is Car
-                2 -> vehicle is Motorcycle
-                3 -> vehicle is Commercial
-                4 -> true
-                else -> false
+        when (typeChoice) {
+            1 -> {
+                println("Введите тип кузова (седан, хэтчбэк, универсал, или нажмите Enter для всех):")
+                val bodyType = readlnOrNull()?.trim()?.lowercase()
+                val filteredAds = ads.filter { ad ->
+                    ad.status == "active" &&
+                            VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
+                                vehicle is Car && (bodyType.isNullOrEmpty() || vehicle.bodyType.lowercase() == bodyType)
+                            } ?: false
+                }
+                printSearchResults(filteredAds)
+            }
+            2 -> {
+                println("Введите тип мотоцикла (кроссовый, спортивный, грантуризмо, или нажмите Enter для всех):")
+                val motoType = readlnOrNull()?.trim()?.lowercase()
+                val filteredAds = ads.filter { ad ->
+                    ad.status == "active" &&
+                            VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
+                                vehicle is Motorcycle && (motoType.isNullOrEmpty() || vehicle.motoType.lowercase() == motoType)
+                            } ?: false
+                }
+                printSearchResults(filteredAds)
+            }
+            3 -> {
+                println("Введите минимальную грузоподъёмность (в кг, или нажмите Enter для всех):")
+                val minCapacity = readlnOrNull()?.toIntOrNull()
+                val filteredAds = ads.filter { ad ->
+                    ad.status == "active" &&
+                            VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
+                                vehicle is Commercial && (minCapacity == null || vehicle.capacity >= minCapacity)
+                            } ?: false
+                }
+                printSearchResults(filteredAds)
+            }
+            else -> {
+                println("Ошибка: Некорректный выбор.")
             }
         }
-
-        printSearchResults(filteredAds)
     }
 
     private fun showAllAds() {
         printSearchResults(ads)
     }
 
+    private fun searchAll() {
+        val filteredAds = ads.filter { it.status == "active" }
+        printSearchResults(filteredAds)
+    }
+
     private fun searchByVIN() {
         println("Введите VIN ТС:")
         val vin = readlnOrNull()?.trim()?.uppercase() ?: return
 
-        val filteredAds = ads.filter { it.vehicleId.uppercase() == vin }
+        val filteredAds = ads.filter { ad ->
+            ad.status == "active" && ad.vehicleId.uppercase() == vin
+        }
         printSearchResults(filteredAds)
     }
 
@@ -209,12 +221,18 @@ object AdService {
             results.forEach { ad ->
                 val vehicle = VehicleService.getVehicleById(ad.vehicleId)
                 if (vehicle != null) {
-                    println("📌 ${vehicle.brand} ${vehicle.model}, ${vehicle.year}г., Цвет: ${vehicle.color}, Пробег: ${vehicle.mileage} км, Цена: ${ad.price} руб.")
+                    val extraInfo = when (vehicle) {
+                        is Car -> "Тип кузова: ${vehicle.bodyType}"
+                        is Motorcycle -> "Тип мотоцикла: ${vehicle.motoType}"
+                        is Commercial -> "Грузоподъёмность: ${vehicle.capacity} кг"
+                    }
+                    println("📌 ${vehicle.brand} ${vehicle.model}, ${vehicle.year}г., Цвет: ${vehicle.color}, Пробег: ${vehicle.mileage} км, Цена: ${ad.price} руб., $extraInfo")
                 }
             }
         }
     }
 
+    // Основной метод поиска
     fun showAds() {
         val activeAds = ads.filter { it.status == "active" }
         if (activeAds.isEmpty()) {
@@ -228,16 +246,18 @@ object AdService {
             println("2. Поиск по цвету")
             println("3. Поиск по типу ТС")
             println("4. Общий поиск (все объявления)")
-            println("5. Поиск по VIN")
-            println("6. Вернуться назад")
+            println("5. Общий поиск (все объявления за всё время)")
+            println("6. Поиск по VIN")
+            println("7. Вернуться назад")
 
             when (readlnOrNull()?.trim()) {
                 "1" -> searchByPriceAndMileage()
                 "2" -> searchByColor()
                 "3" -> searchByType()
-                "4" -> showAllAds()
-                "5" -> searchByVIN()
-                "6" -> return
+                "4" -> searchAll()
+                "5" -> showAllAds()
+                "6" -> searchByVIN()
+                "7" -> return
                 else -> println("Ошибка: Некорректный выбор!")
             }
         }
@@ -245,8 +265,6 @@ object AdService {
 
     // Изменение цены
     fun changeAdPrice() {
-        println("Выберите объявление для изменения цены:")
-
         val activeAds = ads.filter { it.status == "active" }
         if (activeAds.isEmpty()) {
             println("Нет активных объявлений.")
@@ -264,7 +282,7 @@ object AdService {
 
         val choice = readlnOrNull()?.toIntOrNull()
         if (choice == null || choice !in 1..activeAds.size) {
-            println("Ошибка: Некорректный выбор.")
+            println("Ошибка: Некорректный выбор. Попробуйте ещё раз.")
             return changeAdPrice()
         }
 
@@ -273,7 +291,7 @@ object AdService {
         println("Введите новую цену:")
         val newPrice = readlnOrNull()?.toDoubleOrNull()
         if (newPrice == null || newPrice <= 0) {
-            println("Ошибка: Цена должна быть положительным числом!")
+            println("Ошибка: Цена должна быть положительным числом! Попробуйте ещё раз.")
             return changeAdPrice()
         }
 
@@ -284,9 +302,9 @@ object AdService {
             return
         }
 
-        ad.priceHistory.add(newPrice)
+        ad.priceHistory.add(ad.price)
         ad.price = newPrice
-        saveAds()
+        DataStorage.saveData()
         println("✅ Цена объявления обновлена!")
     }
 
@@ -303,7 +321,7 @@ object AdService {
             if (vehicle != null) {
                 println("${index + 1}. ${vehicle.brand} ${vehicle.model} - Текущая цена: ${ad.price} - VIN: ${ad.vehicleId}")
             } else {
-                println("Ошибка: ТС с VIN ${ad.vehicleId} не найдено!")
+                println("Предупреждение: ТС с VIN ${ad.vehicleId} не найдено!")
             }
         }
 
@@ -317,7 +335,7 @@ object AdService {
 
         println("📊 История изменения цен для VIN: ${ad.vehicleId}")
         if (ad.priceHistory.isEmpty()) {
-            println("⏳ Изменений цены не было.")
+            println("⏳ Цена не менялась с момента создания: ${ad.price} руб.")
         } else {
             ad.priceHistory.forEachIndexed { index, price ->
                 println("${index + 1}. $price руб.")
