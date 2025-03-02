@@ -51,17 +51,23 @@ object AdService {
 
         val selectedVehicle = availableVehicles[choice - 1]
 
-        println("Введите ID владельца:")
-        val ownerId = readlnOrNull()?.trim().orEmpty()
         val owners = OwnerService.loadOwners()
-        if (owners.none { it.id == ownerId }) {
-            println("Ошибка: Владелец с ID $ownerId не найден!")
+        if (owners.isEmpty()) {
+            println("Ошибка: Нет зарегистрированных владельцев. Сначала добавьте владельца.")
+            return
+        }
+        println("Выберите владельца для объявления:")
+        owners.forEachIndexed { index, owner ->
+            println("${index + 1}. Имя: ${owner.name}, телефон ${owner.phone}, email ${owner.email}")
+        }
+
+        val ownerChoice = readlnOrNull()?.toIntOrNull()
+        if (ownerChoice == null || ownerChoice !in 1..owners.size) {
+            println("Ошибка: Некорректный выбор владельца.")
             return addAd()
         }
-        if (ownerId.isEmpty()) {
-            println("Ошибка: ID владельца не может быть пустым!")
-            return addAd()
-        }
+
+        val selectedOwner = owners[ownerChoice - 1]
 
         println("Введите цену:")
         val price = readlnOrNull()?.toDoubleOrNull()
@@ -71,7 +77,7 @@ object AdService {
         }
 
         val newAd = Ad(
-            ownerId = ownerId,
+            ownerId = selectedOwner.id,
             vehicleId = selectedVehicle.vin,
             price = price,
             date = LocalDate.now().toString()
