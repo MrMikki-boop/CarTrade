@@ -25,16 +25,13 @@ object VehicleService {
         println("Введите модель:")
         val model = readlnOrNull()?.trim().orEmpty()
 
-        println("Введите год выпуска:")
         val year = readYear()
 
         println("Введите цвет:")
         val color = readlnOrNull()?.trim().orEmpty()
 
-        println("Введите пробег:")
         val mileage = readMileage()
 
-        println("Выберите тип ТС:\n1. Авто\n2. Мото\n3. Коммерческий транспорт")
         val vehicle = createVehicle(vin, brand, model, year, color, mileage)
 
         DataStorage.data.vehicles.add(vehicle)
