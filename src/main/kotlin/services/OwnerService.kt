@@ -44,6 +44,4 @@ object OwnerService {
             println("Ошибка: Некорректный email!")
         }
     }
-
-    fun loadOwners(): List<Owner> = ownerManager.loadOwners()
 }

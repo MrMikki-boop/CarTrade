@@ -1,18 +1,25 @@
 package org.example.services
 
+import org.example.managers.AdManager
+import org.example.managers.JsonAdManager
+import org.example.managers.JsonOwnerManager
+import org.example.managers.JsonVehicleManager
+import org.example.managers.OwnerManager
+import org.example.managers.VehicleManager
 import org.example.models.Ad
 import org.example.models.Car
 import org.example.models.Commercial
 import org.example.models.Motorcycle
-import org.example.storage.DataStorage
 import java.time.LocalDate
 
 object AdService {
-    private val ads: MutableList<Ad> get() = DataStorage.data.ads
+    private val adManager: AdManager = JsonAdManager()
+    private val ownerManager: OwnerManager = JsonOwnerManager()
+    private val vehicleManager: VehicleManager = JsonVehicleManager()
 
     fun addAd() {
-        val availableVehicles = VehicleService.getAllVehicles()
-            .filter { vehicle -> ads.none { it.vehicleId == vehicle.vin } }
+        val availableVehicles = vehicleManager.loadVehicles()
+            .filter { vehicle -> adManager.loadAds().none { it.vehicleId == vehicle.vin } }
 
         if (availableVehicles.isEmpty()) {
             println("Нет доступных ТС для создания объявления.")
@@ -26,7 +33,7 @@ object AdService {
         val vehicleChoice = readVehicleChoice(availableVehicles.size)
         val selectedVehicle = availableVehicles[vehicleChoice - 1]
 
-        val owners = OwnerService.loadOwners()
+        val owners = ownerManager.loadOwners()
         if (owners.isEmpty()) {
             println("Ошибка: Нет зарегистрированных владельцев. Сначала добавьте владельца.")
             return
@@ -48,8 +55,7 @@ object AdService {
             date = LocalDate.now().toString()
         )
         newAd.priceHistory.add(price)
-        ads.add(newAd)
-        DataStorage.saveData()
+        adManager.saveAd(newAd)
         println("✅ Объявление успешно добавлено!")
     }
 
@@ -82,7 +88,7 @@ object AdService {
 
     // Удаление объявления
     fun removeAd() {
-        val activeAds = ads.filter { it.status == "active" }
+        val activeAds = adManager.loadAds().filter { it.status == "active" }
         if (activeAds.isEmpty()) {
             println("Нет активных объявлений для снятия.")
             return
@@ -90,8 +96,8 @@ object AdService {
 
         println("Выберите объявление для удаления:")
         activeAds.forEachIndexed { index, ad ->
-            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
-            val owner = OwnerService.loadOwners().find { it.id == ad.ownerId }
+            val vehicle = vehicleManager.findVehicleByVin(ad.vehicleId)
+            val owner = ownerManager.findOwnerById(ad.ownerId)
             println("${index + 1}. ${vehicle?.brand} ${vehicle?.model} - Владелец: ${owner?.name} (${owner?.phone}), VIN: ${ad.vehicleId}, Цена: ${ad.price}")
         }
 
@@ -102,7 +108,8 @@ object AdService {
 
         selectedAd.status = if (reason == "Продано") "sold" else "removed"
         selectedAd.removalReason = reason
-        DataStorage.saveData()
+        adManager.saveAd(selectedAd)
+
         println("✅ Объявление снято с продажи (Причина: $reason)")
     }
 
@@ -142,9 +149,9 @@ object AdService {
         println("Введите максимальный пробег (или нажмите Enter, чтобы пропустить):")
         val maxMileage = readlnOrNull()?.toIntOrNull()
 
-        val filteredAds = ads.filter { ad ->
+        val filteredAds = adManager.loadAds().filter { ad ->
             ad.status == "active" &&
-                    VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
+                    vehicleManager.findVehicleByVin(ad.vehicleId)?.let { vehicle ->
                         (minPrice == null || ad.price >= minPrice) &&
                                 (maxPrice == null || ad.price <= maxPrice) &&
                                 (minMileage == null || vehicle.mileage >= minMileage) &&
@@ -158,9 +165,9 @@ object AdService {
         println("Введите цвет ТС:")
         val color = readlnOrNull()?.trim()?.lowercase() ?: return
 
-        val filteredAds = ads.filter { ad ->
+        val filteredAds = adManager.loadAds().filter { ad ->
             ad.status == "active" &&
-                    VehicleService.getVehicleById(ad.vehicleId)?.color?.lowercase() == color
+                    vehicleManager.findVehicleByVin(ad.vehicleId)?.color?.lowercase() == color
         }
         printSearchResults(filteredAds)
     }
@@ -176,9 +183,9 @@ object AdService {
             1 -> {
                 println("Введите тип кузова (седан, хэтчбэк, универсал, или нажмите Enter для всех):")
                 val bodyType = readlnOrNull()?.trim()?.lowercase()
-                val filteredAds = ads.filter { ad ->
+                val filteredAds = adManager.loadAds().filter { ad ->
                     ad.status == "active" &&
-                            VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
+                            vehicleManager.findVehicleByVin(ad.vehicleId)?.let { vehicle ->
                                 vehicle is Car && (bodyType.isNullOrEmpty() || vehicle.bodyType.lowercase() == bodyType)
                             } ?: false
                 }
@@ -188,9 +195,9 @@ object AdService {
             2 -> {
                 println("Введите тип мотоцикла (кроссовый, спортивный, грантуризмо, или нажмите Enter для всех):")
                 val motoType = readlnOrNull()?.trim()?.lowercase()
-                val filteredAds = ads.filter { ad ->
+                val filteredAds = adManager.loadAds().filter { ad ->
                     ad.status == "active" &&
-                            VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
+                            vehicleManager.findVehicleByVin(ad.vehicleId)?.let { vehicle ->
                                 vehicle is Motorcycle && (motoType.isNullOrEmpty() || vehicle.motoType.lowercase() == motoType)
                             } ?: false
                 }
@@ -200,9 +207,9 @@ object AdService {
             3 -> {
                 println("Введите минимальную грузоподъёмность (в кг, или нажмите Enter для всех):")
                 val minCapacity = readlnOrNull()?.toIntOrNull()
-                val filteredAds = ads.filter { ad ->
+                val filteredAds = adManager.loadAds().filter { ad ->
                     ad.status == "active" &&
-                            VehicleService.getVehicleById(ad.vehicleId)?.let { vehicle ->
+                            vehicleManager.findVehicleByVin(ad.vehicleId)?.let { vehicle ->
                                 vehicle is Commercial && (minCapacity == null || vehicle.capacity >= minCapacity)
                             } ?: false
                 }
@@ -216,11 +223,11 @@ object AdService {
     }
 
     private fun showAllAds() {
-        printSearchResults(ads)
+        printSearchResults(adManager.loadAds())
     }
 
     private fun searchAll() {
-        val filteredAds = ads.filter { it.status == "active" }
+        val filteredAds = adManager.loadAds().filter { it.status == "active" }
         printSearchResults(filteredAds)
     }
 
@@ -228,7 +235,7 @@ object AdService {
         println("Введите VIN ТС:")
         val vin = readlnOrNull()?.trim()?.uppercase() ?: return
 
-        val filteredAds = ads.filter { ad ->
+        val filteredAds = adManager.loadAds().filter { ad ->
             ad.status == "active" && ad.vehicleId.uppercase() == vin
         }
         printSearchResults(filteredAds)
@@ -240,7 +247,7 @@ object AdService {
         } else {
             println("🔍 Найдено ${results.size} объявлений:")
             results.forEach { ad ->
-                val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+                val vehicle = vehicleManager.findVehicleByVin(ad.vehicleId)
                 if (vehicle != null) {
                     val extraInfo = when (vehicle) {
                         is Car -> "Тип кузова: ${vehicle.bodyType}"
@@ -255,7 +262,7 @@ object AdService {
 
     // Основной метод поиска
     fun showAds() {
-        val activeAds = ads.filter { it.status == "active" }
+        val activeAds = adManager.loadAds().filter { it.status == "active" }
         if (activeAds.isEmpty()) {
             println("🔍 Нет активных объявлений для поиска.")
             return
@@ -286,7 +293,7 @@ object AdService {
 
     // Изменение цены
     fun changeAdPrice() {
-        val activeAds = ads.filter { it.status == "active" }
+        val activeAds = adManager.loadAds().filter { it.status == "active" }
         if (activeAds.isEmpty()) {
             println("Нет активных объявлений.")
             return
@@ -294,7 +301,7 @@ object AdService {
 
         println("Выберите объявление для изменения цены:")
         activeAds.forEachIndexed { index, ad ->
-            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+            val vehicle = vehicleManager.findVehicleByVin(ad.vehicleId)
             if (vehicle == null) {
                 println("Ошибка: ТС с VIN ${ad.vehicleId} не найдено!")
                 return
@@ -316,20 +323,20 @@ object AdService {
 
         ad.priceHistory.add(ad.price)
         ad.price = newPrice
-        DataStorage.saveData()
+        adManager.saveAd(ad)
         println("✅ Цена объявления обновлена!")
     }
 
     // История цены
     fun showPriceHistory() {
-        val activeAds = ads.filter { it.status == "active" }
+        val activeAds = adManager.loadAds().filter { it.status == "active" }
         if (activeAds.isEmpty()) {
             println("Нет активных объявлений для просмотра истории цен.")
             return
         }
 
         activeAds.forEachIndexed { index, ad ->
-            val vehicle = VehicleService.getVehicleById(ad.vehicleId)
+            val vehicle = vehicleManager.findVehicleByVin(ad.vehicleId)
             if (vehicle != null) {
                 println("${index + 1}. ${vehicle.brand} ${vehicle.model} - Текущая цена: ${ad.price} - VIN: ${ad.vehicleId}")
             } else {

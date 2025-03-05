@@ -109,7 +109,4 @@ object VehicleService {
             }
         }
     }
-
-    fun getVehicleById(vin: String): Vehicle? = vehicleManager.findVehicleByVin(vin)
-    fun getAllVehicles(): List<Vehicle> = vehicleManager.loadVehicles()
 }
