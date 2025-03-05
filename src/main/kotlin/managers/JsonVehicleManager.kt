@@ -5,7 +5,9 @@ import org.example.storage.DataStorage
 
 class JsonVehicleManager : VehicleManager {
     override fun saveVehicle(vehicle: Vehicle) {
-        DataStorage.data.vehicles.add(vehicle)
+        if (DataStorage.data.vehicles.none { it.vin == vehicle.vin }) {
+            DataStorage.data.vehicles.add(vehicle)
+        }
         DataStorage.saveData()
     }
 

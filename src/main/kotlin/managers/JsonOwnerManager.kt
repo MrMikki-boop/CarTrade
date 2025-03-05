@@ -5,7 +5,9 @@ import org.example.storage.DataStorage
 
 class JsonOwnerManager : OwnerManager {
     override fun saveOwner(owner: Owner) {
-        DataStorage.data.owners.add(owner)
+        if (DataStorage.data.owners.none { it.id == owner.id }) {
+            DataStorage.data.owners.add(owner)
+        }
         DataStorage.saveData()
     }
 

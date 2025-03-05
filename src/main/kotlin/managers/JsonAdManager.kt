@@ -5,7 +5,9 @@ import org.example.storage.DataStorage
 
 class JsonAdManager : AdManager {
     override fun saveAd(ad: Ad) {
-        DataStorage.data.ads.add(ad)
+        if (DataStorage.data.ads.none { it.id == ad.id }) {
+            DataStorage.data.ads.add(ad)
+        }
         DataStorage.saveData()
     }
 
