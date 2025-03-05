@@ -1,5 +1,7 @@
 package org.example.services
 
+import org.example.managers.JsonVehicleManager
+import org.example.managers.VehicleManager
 import org.example.models.Vehicle
 import org.example.models.Car
 import org.example.models.Commercial
@@ -8,6 +10,8 @@ import org.example.storage.DataStorage
 import java.time.LocalDate
 
 object VehicleService {
+    private val vehicleManager: VehicleManager = JsonVehicleManager()
+
     fun addVehicle() {
         println("Введите VIN (17 символов):")
         val vin = readlnOrNull()?.trim().orEmpty()
@@ -33,9 +37,7 @@ object VehicleService {
         val mileage = readMileage()
 
         val vehicle = createVehicle(vin, brand, model, year, color, mileage)
-
-        DataStorage.data.vehicles.add(vehicle)
-        DataStorage.saveData()
+        vehicleManager.saveVehicle(vehicle)
 
         println("✅ Транспортное средство добавлено успешно!")
     }
@@ -110,6 +112,6 @@ object VehicleService {
         }
     }
 
-    fun getVehicleById(vin: String): Vehicle? = DataStorage.data.vehicles.find { it.vin == vin }
-    fun getAllVehicles(): List<Vehicle> = DataStorage.data.vehicles
+    fun getVehicleById(vin: String): Vehicle? = vehicleManager.findVehicleByVin(vin)
+    fun getAllVehicles(): List<Vehicle> = vehicleManager.loadVehicles()
 }
