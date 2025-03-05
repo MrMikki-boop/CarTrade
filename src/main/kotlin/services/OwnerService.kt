@@ -1,18 +1,20 @@
 package org.example.services
 
+import org.example.managers.JsonOwnerManager
+import org.example.managers.OwnerManager
 import org.example.models.Owner
-import org.example.storage.DataStorage
 import java.util.UUID
 
 object OwnerService {
+    private val ownerManager: OwnerManager = JsonOwnerManager()
+
     fun addOwner() {
         val name = readName()
         val phone = readPhone()
         val email = readEmail()
 
         val owner = Owner(UUID.randomUUID().toString(), name, phone, email)
-        DataStorage.data.owners.add(owner)
-        DataStorage.saveData()
+        ownerManager.saveOwner(owner)
         println("✅ Владелец успешно добавлен!")
     }
 
@@ -43,5 +45,5 @@ object OwnerService {
         }
     }
 
-    fun loadOwners(): List<Owner> = DataStorage.data.owners
+    fun loadOwners(): List<Owner> = ownerManager.loadOwners()
 }
