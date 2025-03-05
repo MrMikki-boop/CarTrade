@@ -6,7 +6,6 @@ import org.example.models.Vehicle
 import org.example.models.Car
 import org.example.models.Commercial
 import org.example.models.Motorcycle
-import org.example.storage.DataStorage
 import java.time.LocalDate
 
 object VehicleService {
@@ -17,8 +16,7 @@ object VehicleService {
         val vin = readlnOrNull()?.trim().orEmpty()
 //        val vin = readVin()
 
-        val vehicles = DataStorage.data.vehicles
-        if (vehicles.any { it.vin == vin }) {
+        if (vehicleManager.findVehicleByVin(vin) != null) {
             println("Ошибка: ТС с таким VIN уже существует!")
             return addVehicle()
         }
