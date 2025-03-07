@@ -3,9 +3,11 @@ package org.example.services
 import org.example.managers.JsonVehicleManager
 import org.example.managers.VehicleManager
 import org.example.models.Vehicle
-import org.example.models.Car
-import org.example.models.Commercial
 import org.example.models.Motorcycle
+import org.example.models.CarBodyType
+import org.example.models.Car
+import org.example.models.MotoType
+import org.example.models.Commercial
 import java.time.LocalDate
 
 object VehicleService {
@@ -89,14 +91,38 @@ object VehicleService {
             val type = readlnOrNull()?.toIntOrNull()
             when (type) {
                 1 -> {
-                    println("Введите тип кузова (седан, хэтчбэк, универсал):")
-                    val bodyType = readlnOrNull()?.trim().orEmpty()
+                    println("Выберите тип кузова:")
+                    println("1. Седан")
+                    println("2. Хэтчбек")
+                    println("3. Универсал")
+                    val bodyTypeChoice = readlnOrNull()?.toIntOrNull()
+                    val bodyType = when (bodyTypeChoice) {
+                        1 -> CarBodyType.SEDAN
+                        2 -> CarBodyType.HATCHBACK
+                        3 -> CarBodyType.UNIVERSAL
+                        else -> {
+                            println("Ошибка: Неверный выбор. Используется седан по умолчанию.")
+                            CarBodyType.SEDAN
+                        }
+                    }
                     return Car(vin, brand, model, year, color, mileage, bodyType)
                 }
 
                 2 -> {
-                    println("Введите тип мотоцикла (кроссовый, спортивный, грантуризмо):")
-                    val motoType = readlnOrNull()?.trim().orEmpty()
+                    println("Выберите тип кузова:")
+                    println("1. Кроссовый")
+                    println("2. Спортивный")
+                    println("3. Грантуризмо")
+                    val motoTypeChoice = readlnOrNull()?.toIntOrNull()
+                    val motoType = when (motoTypeChoice) {
+                        1 -> MotoType.CROSS
+                        2 -> MotoType.SPORT
+                        3 -> MotoType.GRAN_TURISMO
+                        else -> {
+                            println("Ошибка: Неверный выбор. Используется кроссовый по умолчанию.")
+                            MotoType.CROSS
+                        }
+                    }
                     return Motorcycle(vin, brand, model, year, color, mileage, motoType)
                 }
 

@@ -10,7 +10,9 @@ data class Ad(
     val vehicleId: String,
     var price: Double,
     val date: String,
-    var status: String = "active", // active, sold, removed
+    var status: ListingStatus = ListingStatus.ACTIVE, // active, sold, removed
     val priceHistory: MutableList<Double> = mutableListOf(),
     var removalReason: String? = null
 )
+
+enum class ListingStatus { ACTIVE, SOLD, REMOVED }

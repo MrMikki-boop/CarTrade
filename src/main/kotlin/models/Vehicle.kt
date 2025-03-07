@@ -20,7 +20,7 @@ data class Car(
     override val year: Int,
     override val color: String,
     override val mileage: Int,
-    val bodyType: String
+    val bodyType: CarBodyType
 ) : Vehicle()
 
 @Serializable
@@ -31,7 +31,7 @@ data class Motorcycle(
     override val year: Int,
     override val color: String,
     override val mileage: Int,
-    val motoType: String
+    val motoType: MotoType
 ) : Vehicle()
 
 @Serializable
@@ -44,3 +44,9 @@ data class Commercial(
     override val mileage: Int,
     val capacity: Int
 ) : Vehicle()
+
+@Serializable
+enum class CarBodyType { SEDAN, HATCHBACK, UNIVERSAL }
+
+@Serializable
+enum class MotoType { CROSS, SPORT, GRAN_TURISMO }
